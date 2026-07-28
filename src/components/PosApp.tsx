@@ -8,10 +8,12 @@ import MasaProductionManager from "./MasaProductionManager";
 import InventoryManager from "./InventoryManager";
 import CashShiftManager from "./CashShiftManager";
 import CustomersManager from "./CustomersManager";
-import { CheckCircle2, AlertTriangle, RefreshCw, Sparkles, Store, Bike } from "lucide-react";
+import { CheckCircle2, AlertTriangle, RefreshCw, Sparkles, Store, Bike, Wifi, WifiOff } from "lucide-react";
 import ErrorBoundary from "./ErrorBoundary";
+import OfflineProvider, { useOffline, saveSaleOffline } from "./OfflineProvider";
 
-export default function PosApp() {
+function PosAppContent() {
+  const { isOnline, savedSales } = useOffline();
   const [activeTab, setActiveTab] = useState<string>("pos");
   const [loading, setLoading] = useState<boolean>(true);
   const [isSeeding, setIsSeeding] = useState<boolean>(false);
@@ -196,6 +198,9 @@ export default function PosApp() {
           </div>
 
           <div className="flex items-center gap-4 text-slate-400">
+            <span className={`flex items-center gap-1 text-xs ${isOnline ? 'text-emerald-400' : 'text-amber-400'}`}>
+              {isOnline ? <><Wifi className="w-3 h-3" /> En línea</> : <><WifiOff className="w-3 h-3" /> Offline {savedSales > 0 && <span className="text-amber-300 font-bold ml-1">({savedSales} ventas pendientes)</span>}</>}
+            </span>
             <span>
               Tarifas: <strong className="text-emerald-400">Tienda $10</strong> | <strong className="text-amber-400">Moto $11</strong>
             </span>
@@ -209,5 +214,13 @@ export default function PosApp() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function PosApp() {
+  return (
+    <OfflineProvider>
+      <PosAppContent />
+    </OfflineProvider>
   );
 }

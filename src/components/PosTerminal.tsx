@@ -258,7 +258,56 @@ export default function PosTerminal({
       onSaleCompleted();
     } catch (err) {
       console.error("Checkout error:", err);
-      alert("No se pudo conectar con el servidor para registrar el cobro.");
+      // ✅ Guardar venta localmente para cuando vuelva el internet
+      try {
+        const { saveSaleOffline } = await import("./OfflineProvider");
+        const result = saveSaleOffline({
+          shiftId: openShiftId,
+          customerName: selectedCustomerName,
+          paymentMethod,
+          items: cart,
+          subtotal: cartSubtotal.toFixed(2),
+          tax: "0.00",
+          discount: discountAmount.toFixed(2),
+          total: cartTotal.toFixed(2),
+          cashReceived: cashReceived.toFixed(2),
+          changeReturned: changeReturned.toFixed(2),
+          notes,
+        });
+
+        if (result.saved) {
+          // Mostrar ticket aunque esté offline
+          setLastCompletedSale({
+            ticketNumber: `OFFLINE-${Date.now().toString(36).toUpperCase()}`,
+            customerName: selectedCustomerName,
+            paymentMethod,
+            subtotal: cartSubtotal.toFixed(2),
+            tax: "0.00",
+            discount: discountAmount.toFixed(2),
+            total: cartTotal.toFixed(2),
+            cashReceived: cashReceived.toFixed(2),
+            changeReturned: changeReturned.toFixed(2),
+            notes,
+            createdAt: new Date().toISOString(),
+            items: cart.map((item) => ({
+              productName: item.productName,
+              quantity: item.quantity,
+              unit: item.unit,
+              unitPrice: item.unitPrice,
+              subtotal: item.subtotal,
+            })),
+          });
+          setCheckoutOpen(false);
+          setCart([]);
+          setDiscountAmount(0);
+          setReceiptOpen(true);
+          onSaleCompleted();
+        } else {
+          alert("Venta guardada localmente. Se sincronizará cuando haya internet.");
+        }
+      } catch {
+        alert("No se pudo conectar con el servidor para registrar el cobro.");
+      }
     }
   };
 

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="32" fill="#0f172a"/>
+  <circle cx="96" cy="96" r="72" fill="#f59e0b" opacity="0.15"/>
+  <text x="96" y="112" font-size="80" text-anchor="middle" fill="#f59e0b">🌽</text>
+  <rect x="56" y="140" width="80" height="8" rx="4" fill="#f59e0b" opacity="0.6"/>
+  <rect x="66" y="152" width="60" height="6" rx="3" fill="#f59e0b" opacity="0.4"/>
+</svg>
