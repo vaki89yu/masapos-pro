@@ -6,6 +6,15 @@ import { ensureSeeded } from "@/lib/seed-data";
 
 export async function GET(request: Request) {
   try {
+    // Modo demo sin DB
+    if (!process.env.DATABASE_URL) {
+      const demoProducts = [
+        { id: 1, barcode: "MASA-TIENDA-001", name: "Masa de Maíz • Venta en Tienda ($10/kg)", description: "Masa fresca nixtamalizada del molino", category: "tienda", unit: "kg", price: "10.00", costPrice: "6.50", stock: "450.000", minStockAlert: "50.000", isBulk: true, active: true, createdAt: new Date().toISOString() },
+        { id: 2, barcode: "MASA-MOTO-002", name: "Masa de Maíz • Reparto en Moto ($11/kg)", description: "Masa fresca enviada a domicilio", category: "reparto_moto", unit: "kg", price: "11.00", costPrice: "7.00", stock: "350.000", minStockAlert: "50.000", isBulk: true, active: true, createdAt: new Date().toISOString() },
+      ];
+      return NextResponse.json({ products: demoProducts });
+    }
+
     await ensureSeeded();
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");

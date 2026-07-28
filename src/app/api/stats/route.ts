@@ -14,8 +14,28 @@ import { ensureSeeded, ensureOpenShift } from "@/lib/seed-data";
 
 export async function GET() {
   try {
+    // Modo demo sin DB
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({
+        stats: {
+          totalSalesToday: 0,
+          ticketsCountToday: 0,
+          averageTicketToday: 0,
+          kilosMasaSoldToday: 0,
+          masaProductionToday: 0,
+          totalCreditPending: 0,
+          paymentBreakdown: { efectivo: 0, tarjeta: 0, transferencia: 0, credito: 0 },
+          topProducts: [],
+          lowStockCount: 0,
+          openShiftId: 1,
+        },
+        lowStockItems: [],
+        recentSales: [],
+      });
+    }
+
     await ensureSeeded();
-    await ensureOpenShift(); // Siempre garantiza que haya caja abierta
+    await ensureOpenShift();
 
     const allProducts = await db.select().from(products);
     const allSales = await db.select().from(sales).orderBy(desc(sales.createdAt));

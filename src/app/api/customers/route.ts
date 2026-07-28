@@ -6,6 +6,16 @@ import { ensureSeeded } from "@/lib/seed-data";
 
 export async function GET() {
   try {
+    // Modo demo sin DB
+    if (!process.env.DATABASE_URL) {
+      const demoCustomers = [
+        { id: 1, name: "Público en General", phone: "N/A", balance: "0.00", creditLimit: "0.00", createdAt: new Date().toISOString() },
+        { id: 2, name: "Taquería El Pastorcito (Ruta Moto)", phone: "55-4321-8765", balance: "220.00", creditLimit: "3000.00", createdAt: new Date().toISOString() },
+        { id: 3, name: "Tamalería Centro (Ruta Moto)", phone: "55-8899-7766", balance: "110.00", creditLimit: "2500.00", createdAt: new Date().toISOString() },
+      ];
+      return NextResponse.json({ customers: demoCustomers });
+    }
+
     await ensureSeeded();
     const allCustomers = await db.select().from(customers).orderBy(customers.name);
     return NextResponse.json({ customers: allCustomers });
