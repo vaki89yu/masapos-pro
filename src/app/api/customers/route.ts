@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { db, customers, cashMovements, cashShifts } from "@/db";
 import { desc, eq } from "drizzle-orm";
