@@ -9,11 +9,12 @@ import {
   masaProductionLogs,
 } from "@/db";
 import { desc, eq, sql } from "drizzle-orm";
-import { ensureSeeded } from "@/lib/seed-data";
+import { ensureSeeded, ensureOpenShift } from "@/lib/seed-data";
 
 export async function GET() {
   try {
     await ensureSeeded();
+    await ensureOpenShift(); // Siempre garantiza que haya caja abierta
 
     const allProducts = await db.select().from(products);
     const allSales = await db.select().from(sales).orderBy(desc(sales.createdAt));

@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { db, cashShifts, cashMovements, sales } from "@/db";
 import { eq, desc } from "drizzle-orm";
-import { ensureSeeded } from "@/lib/seed-data";
+import { ensureSeeded, ensureOpenShift } from "@/lib/seed-data";
 
 export async function GET() {
   try {
     await ensureSeeded();
+    await ensureOpenShift(); // Siempre garantiza que haya caja abierta
 
     const shifts = await db.select().from(cashShifts).orderBy(desc(cashShifts.openedAt));
     const openShift = shifts.find((s) => s.status === "open") || null;

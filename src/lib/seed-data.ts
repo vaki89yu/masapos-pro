@@ -8,7 +8,7 @@ import {
   masaProductionLogs,
   customers,
 } from "@/db";
-import { count } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 
 export async function ensureSeeded() {
   try {
@@ -18,6 +18,8 @@ export async function ensureSeeded() {
     }
     const existingProducts = await db.select({ count: count() }).from(products);
     if (existingProducts[0] && Number(existingProducts[0].count) > 0) {
+      // Aunque ya esté sembrado, aseguramos que haya caja abierta
+      await ensureOpenShift();
       return { seeded: false, message: "Database already seeded" };
     }
 
@@ -232,10 +234,55 @@ export async function ensureSeeded() {
       ]);
     }
 
+    // Asegurar que siempre haya un turno abierto después de sembrar
+    await ensureOpenShift();
+
     console.log("MasaPOS Pro database seeded successfully with Tienda ($10) & Reparto Moto ($11) catalog!");
     return { seeded: true, message: "Database seeded successfully" };
   } catch (error) {
     console.error("Error seeding database:", error);
     throw error;
+  }
+}
+
+// Función que SIEMPRE garantiza que haya un turno de caja abierto
+export async function ensureOpenShift() {
+  if (!process.env.DATABASE_URL) return null;
+
+  try {
+    // Buscar si ya hay un turno abierto
+    const openShifts = await db
+      .select()
+      .from(cashShifts)
+      .where(eq(cashShifts.status, "open"));
+
+    if (openShifts.length > 0) {
+      return openShifts[0]; // Ya hay uno abierto
+    }
+
+    // No hay turno abierto → crear uno automáticamente
+    const [newShift] = await db
+      .insert(cashShifts)
+      .values({
+        cashierName: "Caja 1 - Principal (Automático)",
+        initialCash: "500.00",
+        status: "open",
+        notes: "Apertura automática del sistema - siempre hay caja disponible",
+      })
+      .returning();
+
+    // Registrar el movimiento de fondo inicial
+    await db.insert(cashMovements).values({
+      shiftId: newShift.id,
+      type: "in",
+      amount: "500.00",
+      reason: "Fondo inicial automático del sistema",
+    });
+
+    console.log(`✅ Turno de caja #${newShift.id} abierto automáticamente`);
+    return newShift;
+  } catch (error) {
+    console.error("Error ensuring open shift:", error);
+    return null;
   }
 }

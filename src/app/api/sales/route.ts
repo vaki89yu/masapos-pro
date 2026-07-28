@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { db, sales, saleItems, products, cashShifts, customers } from "@/db";
 import { eq, desc } from "drizzle-orm";
-import { ensureSeeded } from "@/lib/seed-data";
+import { ensureSeeded, ensureOpenShift } from "@/lib/seed-data";
 
 export async function GET(request: Request) {
   try {
     await ensureSeeded();
+    await ensureOpenShift();
     const { searchParams } = new URL(request.url);
     const limit = Number(searchParams.get("limit") || "50");
     const paymentMethod = searchParams.get("paymentMethod");
@@ -51,6 +52,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    await ensureOpenShift(); // Siempre hay caja abierta para cobrar
     const body = await request.json();
     const {
       shiftId,
