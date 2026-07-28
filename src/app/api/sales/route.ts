@@ -6,6 +6,11 @@ import { ensureSeeded, ensureOpenShift } from "@/lib/seed-data";
 
 export async function GET(request: Request) {
   try {
+    // Modo demo sin DB
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ sales: [] });
+    }
+
     await ensureSeeded();
     await ensureOpenShift();
     const { searchParams } = new URL(request.url);
@@ -22,7 +27,6 @@ export async function GET(request: Request) {
       allSales = allSales.filter((s) => s.paymentMethod === paymentMethod);
     }
 
-    // Get items for the returned sales
     const saleIds = allSales.map((s) => s.id);
     let itemsMap: Record<number, any[]> = {};
 
@@ -53,31 +57,58 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    await ensureOpenShift(); // Siempre hay caja abierta para cobrar
     const body = await request.json();
-    const {
-      shiftId,
-      customerName,
-      paymentMethod,
-      items,
-      subtotal,
-      tax,
-      discount,
-      total,
-      cashReceived,
-      changeReturned,
-      notes,
-    } = body;
 
-    if (!items || !Array.isArray(items) || items.length === 0) {
+    if (!body.items || !Array.isArray(body.items) || body.items.length === 0) {
       return NextResponse.json(
         { error: "El carrito no contiene productos para cobrar." },
         { status: 400 }
       );
     }
 
-    // Find current open shift if shiftId is not provided
-    let activeShiftId = shiftId;
+    // ✅ MODO DEMO - Sin DATABASE_URL
+    if (!process.env.DATABASE_URL) {
+      const now = new Date();
+      const ts = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+      const rand = Math.floor(1000 + Math.random() * 9000);
+      const ticketNumber = `TICK-${ts}-${rand}`;
+
+      const saleItemsList = body.items.map((item: any, idx: number) => ({
+        id: idx + 1,
+        saleId: 1,
+        productId: item.productId,
+        productName: item.productName,
+        unit: item.unit || "kg",
+        quantity: String(item.quantity),
+        unitPrice: String(item.unitPrice),
+        subtotal: String(item.subtotal),
+      }));
+
+      return NextResponse.json({
+        sale: {
+          id: Math.floor(Math.random() * 10000),
+          ticketNumber,
+          shiftId: body.shiftId || 1,
+          customerName: body.customerName || "Público en General",
+          paymentMethod: body.paymentMethod || "efectivo",
+          subtotal: String(body.subtotal || "0.00"),
+          tax: "0.00",
+          discount: String(body.discount || "0.00"),
+          total: String(body.total || "0.00"),
+          cashReceived: String(body.cashReceived || "0.00"),
+          changeReturned: String(body.changeReturned || "0.00"),
+          status: "completed",
+          notes: body.notes || null,
+          createdAt: now.toISOString(),
+          items: saleItemsList,
+        },
+      }, { status: 201 });
+    }
+
+    // ✅ MODO REAL - Con DATABASE_URL
+    await ensureOpenShift();
+
+    let activeShiftId = body.shiftId;
     if (!activeShiftId) {
       const openShifts = await db
         .select()
@@ -88,11 +119,8 @@ export async function POST(request: Request) {
       }
     }
 
-    // Generate unique Ticket number
     const now = new Date();
-    const timestampStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(
-      now.getDate()
-    ).padStart(2, "0")}`;
+    const timestampStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const ticketNumber = `TICK-${timestampStr}-${randomSuffix}`;
 
@@ -101,22 +129,21 @@ export async function POST(request: Request) {
       .values({
         ticketNumber,
         shiftId: activeShiftId ? Number(activeShiftId) : null,
-        customerName: customerName || "Público en General",
-        paymentMethod: paymentMethod || "efectivo",
-        subtotal: String(subtotal || "0.00"),
-        tax: String(tax || "0.00"),
-        discount: String(discount || "0.00"),
-        total: String(total || "0.00"),
-        cashReceived: String(cashReceived || "0.00"),
-        changeReturned: String(changeReturned || "0.00"),
+        customerName: body.customerName || "Público en General",
+        paymentMethod: body.paymentMethod || "efectivo",
+        subtotal: String(body.subtotal || "0.00"),
+        tax: String(body.tax || "0.00"),
+        discount: String(body.discount || "0.00"),
+        total: String(body.total || "0.00"),
+        cashReceived: String(body.cashReceived || "0.00"),
+        changeReturned: String(body.changeReturned || "0.00"),
         status: "completed",
-        notes: notes || null,
+        notes: body.notes || null,
       })
       .returning();
 
-    // Insert sale items and decrease inventory
     const insertedItems = [];
-    for (const item of items) {
+    for (const item of body.items) {
       const [newSaleItem] = await db
         .insert(saleItems)
         .values({
@@ -132,7 +159,6 @@ export async function POST(request: Request) {
 
       insertedItems.push(newSaleItem);
 
-      // Decrement stock in products table
       const [existingProduct] = await db
         .select()
         .from(products)
@@ -150,15 +176,14 @@ export async function POST(request: Request) {
       }
     }
 
-    // If sale is 'credito', update customer balance
-    if (paymentMethod === "credito" && customerName && customerName !== "Público en General") {
+    if (body.paymentMethod === "credito" && body.customerName && body.customerName !== "Público en General") {
       const existingCustomers = await db
         .select()
         .from(customers)
-        .where(eq(customers.name, customerName));
+        .where(eq(customers.name, body.customerName));
       if (existingCustomers.length > 0) {
         const cust = existingCustomers[0];
-        const newBalance = (Number(cust.balance || 0) + Number(total || 0)).toFixed(2);
+        const newBalance = (Number(cust.balance || 0) + Number(body.total || 0)).toFixed(2);
         await db
           .update(customers)
           .set({ balance: newBalance })
