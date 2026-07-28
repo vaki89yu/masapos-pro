@@ -12,6 +12,10 @@ import { count } from "drizzle-orm";
 
 export async function ensureSeeded() {
   try {
+    if (!process.env.DATABASE_URL) {
+      console.warn("⚠️ DATABASE_URL no configurada. No se puede sembrar la base de datos.");
+      return { seeded: false, message: "DATABASE_URL not configured" };
+    }
     const existingProducts = await db.select({ count: count() }).from(products);
     if (existingProducts[0] && Number(existingProducts[0].count) > 0) {
       return { seeded: false, message: "Database already seeded" };
