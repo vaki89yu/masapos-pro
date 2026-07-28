@@ -1,12 +1,21 @@
 {
-  "name": "nextjs-postgresql-template",
+  "name": "masapos-pro",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+
+    "electron:dev": "concurrently \"next dev -p 3456\" \"wait-on http://localhost:3456 && electron electron/main.js\"",
+    "electron:build": "next build && electron-builder --win --linux",
+    "electron:build:win": "next build && electron-builder --win",
+    "electron:build:linux": "next build && electron-builder --linux",
+    "electron:build:mac": "next build && electron-builder --mac",
+
+    "android:apk": "echo 'Usa https://pwabuilder.com o https://appmaker.xyz para generar APK desde la URL de MasaPOS Pro'"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -14,7 +23,6 @@
     "drizzle-orm": "0.45.2",
     "lucide-react": "^1.27.0",
     "next": "16.2.6",
-    "next-pwa": "^5.6.0",
     "pg": "8.20.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
@@ -26,11 +34,47 @@
     "@types/pg": "8.18.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
+    "concurrently": "^9.1.2",
     "drizzle-kit": "0.31.10",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
     "eslint": "9.39.4",
     "eslint-config-next": "16.2.6",
+    "eslint-plugin-react": "^7.37.5",
     "postcss": "8.5.8",
+
     "tailwindcss": "4.1.17",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "com.masapos.pro",
+    "productName": "MasaPOS Pro",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      ".next/**/*",
+      "public/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "public/images/masa-hero.jpg"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "icon": "public/images/masa-hero.jpg"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "public/images/masa-hero.jpg"
+    }
   }
 }

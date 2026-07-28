@@ -1,0 +1,53 @@
+appId: com.masapos.pro
+productName: MasaPOS Pro
+copyright: Copyright © 2026 MasaPOS Pro
+
+directories:
+  output: release
+  buildResources: public
+
+files:
+  - electron/**/*
+  - package.json
+  - .next/**/*
+  - public/**/*
+  - next.config.ts
+  - package-lock.json
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: public/images/masa-hero.jpg
+  artifactName: MasaPOS-Pro-${version}-Setup.${ext}
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: public/images/masa-hero.jpg
+  uninstallerIcon: public/images/masa-hero.jpg
+  installerHeaderIcon: public/images/masa-hero.jpg
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: MasaPOS Pro
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+  icon: public/images/masa-hero.jpg
+  artifactName: MasaPOS-Pro-${version}.${ext}
+
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+    - target: deb
+      arch:
+        - x64
+  icon: public/images/masa-hero.jpg
+  artifactName: MasaPOS-Pro-${version}.${ext}
