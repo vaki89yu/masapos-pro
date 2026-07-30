@@ -1,7 +1,14 @@
 node_modules/
 .next/
+release/
 .env
 .env.local
+.env.production
+*.log
+.DS_Store
+dist/
+build/
+tsconfig.tsbuildinfo
 .env.production
 *.log
 .DS_Store
