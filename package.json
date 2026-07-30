@@ -1,6 +1,9 @@
 {
   "name": "masapos-pro",
-  "private": true,
+  "version": "2.0.0",
+  "description": "MasaPOS Pro - Sistema POS para Fábricas de Masa, Molinos y Tortillerías",
+  "author": "MasaPOS Pro",
+  "license": "MIT",
   "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
@@ -8,14 +11,11 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-
     "electron:dev": "concurrently \"next dev -p 3456\" \"wait-on http://localhost:3456 && electron electron/main.js\"",
     "electron:build": "next build && electron-builder --win --linux",
-    "electron:build:win": "next build && electron-builder --win",
+    "electron:build:win": "next build && electron-builder --win --x64",
     "electron:build:linux": "next build && electron-builder --linux",
-    "electron:build:mac": "next build && electron-builder --mac",
-
-    "android:apk": "echo 'Usa https://pwabuilder.com o https://appmaker.xyz para generar APK desde la URL de MasaPOS Pro'"
+    "electron:build:mac": "next build && electron-builder --mac"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -40,9 +40,7 @@
     "electron-builder": "^26.15.3",
     "eslint": "9.39.4",
     "eslint-config-next": "16.2.6",
-    "eslint-plugin-react": "^7.37.5",
     "postcss": "8.5.8",
-
     "tailwindcss": "4.1.17",
     "typescript": "5.9.3",
     "wait-on": "^8.0.3"
@@ -50,31 +48,65 @@
   "build": {
     "appId": "com.masapos.pro",
     "productName": "MasaPOS Pro",
+    "copyright": "Copyright © 2026 MasaPOS Pro",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "public"
     },
     "files": [
       "electron/**/*",
       ".next/**/*",
       "public/**/*",
-      "package.json"
+      "package.json",
+      "next.config.ts"
+    ],
+    "extraResources": [
+      {
+        "from": ".next",
+        "to": ".next",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "public",
+        "to": "public",
+        "filter": ["**/*"]
+      }
     ],
     "win": {
-      "target": "nsis",
-      "icon": "public/images/masa-hero.jpg"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "public/icon.png",
+      "artifactName": "MasaPOS-Pro-${version}-Setup.${ext}"
     },
     "nsis": {
       "oneClick": false,
+      "perMachine": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "MasaPOS Pro",
+      "installerIcon": "public/icon.png",
+      "uninstallerIcon": "public/icon.png",
+      "installerHeaderIcon": "public/icon.png",
+      "license": null
     },
     "linux": {
-      "target": ["AppImage", "deb"],
-      "icon": "public/images/masa-hero.jpg"
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "public/images/masa-hero.jpg"
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "public/icon.png",
+      "category": "Office"
     }
   }
 }
